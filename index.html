@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Изучаем углы - Unghiuri</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Comfortaa', cursive;
+        }
+        
+        .card-flip {
+            perspective: 1000px;
+        }
+        
+        .card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .card-flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            backface-visibility: hidden;
+        }
+        
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        
+        .angle-visual {
+            stroke-width: 2;
+            fill: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        .animate-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // База данных терминов
+        const termsDatabase = {
+            basic: [
+                {
+                    id: 1,
+                    ro: "unghi",
+                    transcription: "унгь",
+                    ru: "угол",
+                    definition: "Геометрическая фигура, образованная двумя полупрямыми с общим началом",
+                    example: "Unghiul AOB are măsura de 40°",
+                    exampleRu: "Угол AOB имеет величину 40°",
+                    category: "basic",
+                    visual: "angle"
+                },
+                {
+                    id: 2,
+                    ro: "vârf",
+                    transcription: "вырф",
+                    ru: "вершина угла",
+                    definition: "Общая точка (начало) двух полупрямых, образующих угол",
+                    example: "În unghiul AOB, vârful este punctul O",
+                    exampleRu: "В угле AOB вершина — точка O",
+                    category: "basic",
+                    visual: "vertex"
+                },
+                {
+                    id: 3,
+                    ro: "latură",
+                    transcription: "лату́ра",
+                    ru: "сторона угла",
+                    definition: "Полупрямая, ограничивающая угол",
+                    example: "Laturile unghiului AOB sunt semidreaptele OA și OB",
+                    exampleRu: "Стороны угла AOB — это полупрямые OA и OB",
+                    category: "basic",
+                    visual: "side"
+                },
+                {
+                    id: 4,
+                    ro: "semidreaptă",
+                    transcription: "семидря́пта",
+                    ru: "полупрямая",
+                    definition: "Часть прямой, имеющая начало, но продолжающаяся бесконечно в одну сторону",
+                    example: "OA este o semidreaptă cu originea în O",
+                    exampleRu: "OA — полупрямая с началом в точке O",
+                    category: "basic",
+                    visual: "ray"
+                }
+            ],
+            types: [
+                {
+                    id: 5,
+                    ro: "unghi drept",
+                    transcription: "унгь дрепт",
+                    ru: "прямой угол",
+                    definition: "Угол, равный 90°",
+                    example: "Unghiul dintre pereții camerei este drept",
+                    exampleRu: "Угол между стенами комнаты — прямой",
+                    category: "types",
+                    degrees: 90,
+                    visual: "right"
+                },
+                {
+                    id: 6,
+                    ro: "unghi ascuțit",
+                    transcription: "унгь аску́цит",
+                    ru: "острый угол",
+                    definition: "Угол меньше 90°",
+                    example: "Un unghi de 35° este ascuțit",
+                    exampleRu: "Угол 35° — острый",
+                    category: "types",
+                    degrees: 45,
+                    visual: "acute"
+                },
+                {
+                    id: 7,
+                    ro: "unghi obtuz",
+                    transcription: "унгь обту́з",
+                    ru: "тупой угол",
+                    definition: "Угол больше 90°, но меньше 180°",
+                    example: "Un unghi de 120° este obtuz",
+                    exampleRu: "Угол 120° — тупой",
+                    category: "types",
+                    degrees: 120,
+                    visual: "obtuse"
+                },
+                {
+                    id: 8,
+                    ro: "unghi alungit",
+                    transcription: "унгь алунжи́т",
+                    ru: "развернутый угол",
+                    definition: "Угол, равный 180°",
+                    example: "Două semidrepte opuse formează un unghi alungit",
+                    exampleRu: "Две противоположные полупрямые образуют развернутый угол",
+                    category: "types",
+                    degrees: 180,
+                    visual: "straight"
+                },
+                {
+                    id: 9,
+                    ro: "unghi nul",
+                    transcription: "унгь нул",
+                    ru: "нулевой угол",
+                    definition: "Угол величиной 0°",
+                    example: "Când laturile unghiului coincid, unghiul este nul",
+                    exampleRu: "Когда стороны угла совпадают, угол нулевой",
+                    category: "types",
+                    degrees: 0,
+                    visual: "zero"
+                }
+            ],
+            relations: [
+                {
+                    id: 10,
+                    ro: "unghiuri opuse la vârf",
+                    transcription: "унгю́рь опу́се ла вырф",
+                    ru: "вертикальные углы",
+                    definition: "Углы, образованные при пересечении двух прямых. Всегда равны!",
+                    example: "Două drepte se intersectează și formează unghiuri opuse la vârf congruente",
+                    exampleRu: "Две прямые пересекаются и образуют равные вертикальные углы",
+                    category: "relations",
+                    important: true
+                },
+                {
+                    id: 11,
+                    ro: "unghiuri adiacente",
+                    transcription: "унгю́рь адиаце́нте",
+                    ru: "смежные углы",
+                    definition: "Углы с общей вершиной, общей стороной и непересекающимися внутренними областями",
+                    example: "Unghiurile MON și NOP sunt adiacente",
+                    exampleRu: "Углы MON и NOP смежные",
+                    category: "relations",
+                    important: true
+                },
+                {
+                    id: 12,
+                    ro: "unghiuri complementare",
+                    transcription: "унгю́рь комплемента́ре",
+                    ru: "комплементарные углы",
+                    definition: "Два угла, сумма которых равна 90°. Могут находиться где угодно!",
+                    example: "Unghiurile de 30° și 60° sunt complementare",
+                    exampleRu: "Углы 30° и 60° комплементарные",
+                    category: "relations",
+                    sum: 90,
+                    important: true
+                },
+                {
+                    id: 13,
+                    ro: "unghiuri suplementare",
+                    transcription: "унгю́рь суплемента́ре",
+                    ru: "суплементарные углы",
+                    definition: "Два угла, сумма которых равна 180°. Не обязательно смежные!",
+                    example: "Unghiurile de 70° și 110° sunt suplementare",
+                    exampleRu: "Углы 70° и 110° суплементарные",
+                    category: "relations",
+                    sum: 180,
+                    important: true
+                },
+                {
+                    id: 14,
+                    ro: "unghiuri în jurul unui punct",
+                    transcription: "унгю́рь ын жу́рул уну́й пункт",
+                    ru: "углы вокруг точки",
+                    definition: "Все углы с общей вершиной, покрывающие полный оборот. Сумма = 360°!",
+                    example: "Cinci unghiuri în jurul punctului O au suma 360°",
+                    exampleRu: "Пять углов вокруг точки O в сумме дают 360°",
+                    category: "relations",
+                    sum: 360
+                }
+            ],
+            tools: [
+                {
+                    id: 15,
+                    ro: "bisectoarea",
+                    transcription: "бисекто́ара",
+                    ru: "биссектриса угла",
+                    definition: "Луч, делящий угол на две равные части",
+                    example: "OM este bisectoarea unghiului AOB",
+                    exampleRu: "OM — биссектриса угла AOB",
+                    category: "tools"
+                },
+                {
+                    id: 16,
+                    ro: "compas",
+                    transcription: "ко́мпас",
+                    ru: "циркуль",
+                    definition: "Чертёжный инструмент для построения окружностей и дуг",
+                    example: "Compasul se folosește pentru construcții geometrice",
+                    exampleRu: "Циркуль используется для геометрических построений",
+                    category: "tools"
+                },
+                {
+                    id: 17,
+                    ro: "raportor",
+                    transcription: "рапорто́р",
+                    ru: "транспортир",
+                    definition: "Измерительный инструмент для определения величины угла в градусах",
+                    example: "Cu raportorul măsurăm unghiul și aflăm că are 65°",
+                    exampleRu: "Транспортиром измеряем угол и узнаем, что он равен 65°",
+                    category: "tools"
+                }
+            ]
+        };
+
+        const allTerms = [...termsDatabase.basic, ...termsDatabase.types, ...termsDatabase.relations, ...termsDatabase.tools];
+
+        // Компонент карточки
+        const Flashcard = ({ term, onNext, showHint }) => {
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [showExample, setShowExample] = useState(true); // По умолчанию показан
+            const [isSpeaking, setIsSpeaking] = useState(false);
+            const [voicesLoaded, setVoicesLoaded] = useState(false);
+            const [currentVoiceInfo, setCurrentVoiceInfo] = useState('');
+            const [showVoiceDebug, setShowVoiceDebug] = useState(false);
+
+            // Загрузка голосов при монтировании компонента
+            useEffect(() => {
+                const loadVoices = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    if (voices.length > 0) {
+                        setVoicesLoaded(true);
+                        // Показываем информацию о доступных румынских голосах
+                        const romanianVoices = voices.filter(v => v.lang.startsWith('ro'));
+                        if (romanianVoices.length > 0) {
+                            console.log('Доступные румынские голоса:', romanianVoices);
+                        } else {
+                            console.log('Румынские голоса не найдены. Доступные языки:', 
+                                [...new Set(voices.map(v => v.lang))].sort());
+                        }
+                    }
+                };
+
+                // Загружаем голоса
+                loadVoices();
+                
+                // Некоторые браузеры загружают голоса асинхронно
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = loadVoices;
+                }
+            }, []);
+
+            // Сброс карточки на лицевую сторону при смене термина и показ примера
+            useEffect(() => {
+                setIsFlipped(false);
+                setShowExample(true); // Всегда показываем пример при новой карточке
+            }, [term.id]);
+
+            // Функция озвучивания текста
+            const speak = (text, lang = 'ro-RO') => {
+                // Проверяем поддержку браузером
+                if (!('speechSynthesis' in window)) {
+                    alert('Ваш браузер не поддерживает озвучивание текста');
+                    return;
+                }
+
+                // Останавливаем предыдущее воспроизведение
+                window.speechSynthesis.cancel();
+
+                // Получаем список доступных голосов
+                const voices = window.speechSynthesis.getVoices();
+                
+                // Ищем только румынские голоса
+                const romanianVoices = voices.filter(voice => voice.lang.startsWith('ro'));
+                
+                if (romanianVoices.length === 0) {
+                    // Определяем операционную систему
+                    const getOS = () => {
+                        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                        
+                        if (/windows phone/i.test(userAgent)) return "Windows Phone";
+                        if (/android/i.test(userAgent)) return "Android";
+                        if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "iOS";
+                        if (/Win/i.test(userAgent)) return "Windows";
+                        if (/Mac/i.test(userAgent)) return "macOS";
+                        if (/Linux/i.test(userAgent)) return "Linux";
+                        return "Unknown";
+                    };
+                    
+                    const os = getOS();
+                    let instruction = '';
+                    
+                    switch(os) {
+                        case 'Windows':
+                            instruction = '📱 Windows:\nНастройки → Время и язык → Речь → Управление голосами → Добавить голоса → Romanian';
+                            break;
+                        case 'macOS':
+                            instruction = '🍎 macOS:\nSystem Preferences → Accessibility → Spoken Content → System Voice → Customize → Romanian';
+                            break;
+                        case 'Android':
+                            instruction = '📱 Android:\nНастройки → Система → Язык и ввод → Преобразование текста в речь → Языковые пакеты → Romanian';
+                            break;
+                        case 'iOS':
+                            instruction = '📱 iOS:\nНастройки → Универсальный доступ → Устный контент → Голоса → Romanian';
+                            break;
+                        default:
+                            instruction = '💡 Установите румынский языковой пакет в настройках системы в разделе "Речь" или "Text-to-Speech"';
+                    }
+                    
+                    alert(`⚠️ Румынский голос не найден!\n\nВ вашей системе не установлен румынский языковой пакет для озвучивания.\n\n${instruction}`);
+                    setCurrentVoiceInfo('❌ Румынский голос не установлен');
+                    return;
+                }
+
+                // Используем первый румынский голос
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = 0.8; // Немного медленнее для учебы
+                utterance.pitch = 1.0; // Естественный тон
+                utterance.volume = 1.0;
+                utterance.voice = romanianVoices[0];
+
+                setCurrentVoiceInfo(`🎤 Голос: ${romanianVoices[0].name} (румынский)`);
+
+                utterance.onstart = () => setIsSpeaking(true);
+                utterance.onend = () => setIsSpeaking(false);
+                utterance.onerror = () => setIsSpeaking(false);
+
+                window.speechSynthesis.speak(utterance);
+            };
+
+            // Функция для показа всех доступных голосов
+            const showAvailableVoices = () => {
+                const voices = window.speechSynthesis.getVoices();
+                const romanianVoices = voices.filter(v => v.lang.startsWith('ro'));
+                
+                let message = '🎤 ДИАГНОСТИКА ГОЛОСОВ:\n\n';
+                
+                if (romanianVoices.length > 0) {
+                    message += '✅ Румынские голоса найдены:\n';
+                    romanianVoices.forEach((v, i) => {
+                        message += `${i + 1}. ${v.name} (${v.lang})\n`;
+                    });
+                } else {
+                    message += '❌ Румынские голоса НЕ найдены!\n\n';
+                    message += '📋 Доступные языки:\n';
+                    const langs = [...new Set(voices.map(v => v.lang))].sort();
+                    message += langs.slice(0, 10).join(', ');
+                    message += '\n\nРекомендация: установите румынский языковой пакет в настройках системы.';
+                }
+                
+                alert(message);
+            };
+
+            return (
+                <div className="w-full max-w-2xl mx-auto">
+                    <div 
+                        className="card-flip h-96 cursor-pointer"
+                        onClick={() => setIsFlipped(!isFlipped)}
+                    >
+                        <div className={`card-inner relative w-full h-full ${isFlipped ? 'card-flipped' : ''}`}>
+                            {/* Лицевая сторона */}
+                            <div className="card-front absolute w-full h-full">
+                                <div className="bg-gradient-to-br from-blue-400 to-purple-500 rounded-3xl shadow-2xl p-8 flex flex-col items-center justify-center h-full text-white">
+                                    <div className="text-6xl font-bold mb-4">{term.ro}</div>
+                                    <div className="text-2xl opacity-90 mb-2">[{term.transcription}]</div>
+                                    {term.degrees !== undefined && (
+                                        <div className="text-4xl mt-4 font-bold">{term.degrees}°</div>
+                                    )}
+                                    {term.sum && (
+                                        <div className="text-3xl mt-4 font-bold">Сумма = {term.sum}°</div>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Не переворачивать карточку при клике
+                                            speak(term.ro);
+                                        }}
+                                        className={`mt-6 px-6 py-3 rounded-xl font-bold text-lg transition-all ${
+                                            isSpeaking 
+                                                ? 'bg-yellow-400 text-gray-800 animate-pulse' 
+                                                : 'bg-white text-purple-600 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        {isSpeaking ? '🔊 Произношу...' : '🔊 Произнести'}
+                                    </button>
+                                    <div className="text-sm mt-4 opacity-75">👆 Нажми на карточку для перевода</div>
+                                </div>
+                            </div>
+
+                            {/* Обратная сторона */}
+                            <div className="card-back absolute w-full h-full">
+                                <div className="bg-gradient-to-br from-green-400 to-teal-500 rounded-3xl shadow-2xl p-8 flex flex-col items-center justify-center h-full text-white">
+                                    <div className="text-5xl font-bold mb-4">{term.ru}</div>
+                                    <div className="text-xl mt-4 text-center leading-relaxed max-w-lg">
+                                        {term.definition}
+                                    </div>
+                                    {term.important && (
+                                        <div className="mt-4 bg-yellow-300 text-yellow-900 px-4 py-2 rounded-full font-bold">
+                                            ⭐ Важно знать!
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            speak(term.ro);
+                                        }}
+                                        className={`mt-4 px-6 py-3 rounded-xl font-bold text-lg transition-all ${
+                                            isSpeaking 
+                                                ? 'bg-yellow-400 text-gray-800 animate-pulse' 
+                                                : 'bg-white text-green-600 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        {isSpeaking ? '🔊 Произношу...' : '🔊 Произнести'}
+                                    </button>
+                                    <div className="text-sm mt-4 opacity-75">👆 Нажми снова на карточку</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Кнопки управления */}
+                    <div className="flex gap-4 mt-6 justify-center flex-wrap">
+                        <button
+                            onClick={() => setShowExample(!showExample)}
+                            className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-6 py-3 rounded-xl font-bold shadow-lg transition-all"
+                        >
+                            {showExample ? '📚 Скрыть пример' : '📚 Показать пример'}
+                        </button>
+                        <button
+                            onClick={onNext}
+                            className="bg-gradient-to-r from-pink-400 to-purple-500 hover:from-pink-500 hover:to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition-all"
+                        >
+                            Следующая карточка →
+                        </button>
+                    </div>
+
+                    {/* Информация о текущем голосе */}
+                    {currentVoiceInfo && (
+                        <div className="mt-4 text-center text-sm text-gray-600 bg-gray-100 py-2 px-4 rounded-lg">
+                            {currentVoiceInfo}
+                        </div>
+                    )}
+
+                    {/* Примеры - показаны по умолчанию */}
+                    {showExample && (
+                        <div className="mt-6 bg-white rounded-xl p-6 shadow-lg">
+                            <div className="mb-3 flex items-center gap-2">
+                                <span className="font-bold text-purple-600">💬 Пример: </span>
+                                <span className="text-lg flex-1">{term.example}</span>
+                                <button
+                                    onClick={() => speak(term.example)}
+                                    className="px-3 py-1 bg-purple-100 hover:bg-purple-200 text-purple-600 rounded-lg text-sm font-bold transition-all"
+                                    title="Произнести пример"
+                                >
+                                    🔊
+                                </button>
+                            </div>
+                            <div>
+                                <span className="font-bold text-green-600">📖 Перевод: </span>
+                                <span className="text-lg">{term.exampleRu}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Кнопка диагностики внизу */}
+                    <div className="mt-8 pt-6 border-t border-gray-200 text-center">
+                        <button
+                            onClick={showAvailableVoices}
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold shadow transition-all text-sm"
+                            title="Проверить доступные голоса"
+                        >
+                            🔍 Диагностика голоса
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // Компонент квиза
+        const Quiz = ({ terms, onComplete }) => {
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [score, setScore] = useState(0);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
+            const [showResult, setShowResult] = useState(false);
+            const [quizTerms] = useState(() => {
+                const shuffled = [...terms].sort(() => Math.random() - 0.5);
+                return shuffled.slice(0, 10);
+            });
+
+            // Очистка таймаутов при размонтировании компонента
+            useEffect(() => {
+                return () => {
+                    // Очищаем все таймауты
+                };
+            }, []);
+
+            const generateOptions = (correctTerm) => {
+                const options = [correctTerm];
+                const otherTerms = terms.filter(t => t.id !== correctTerm.id);
+                
+                while (options.length < 4 && otherTerms.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * otherTerms.length);
+                    options.push(otherTerms[randomIndex]);
+                    otherTerms.splice(randomIndex, 1);
+                }
+                
+                return options.sort(() => Math.random() - 0.5);
+            };
+
+            const currentTerm = quizTerms[currentQuestion];
+            const options = generateOptions(currentTerm);
+
+            const handleAnswer = (option) => {
+                if (selectedAnswer !== null) return; // Предотвращаем множественные клики
+                
+                setSelectedAnswer(option);
+                const isCorrect = option.id === currentTerm.id;
+                
+                if (isCorrect) {
+                    setScore(score + 1);
+                    // Правильный ответ - показываем зеленым дольше (2 секунды)
+                    setTimeout(() => {
+                        if (currentQuestion < quizTerms.length - 1) {
+                            setCurrentQuestion(currentQuestion + 1);
+                            setSelectedAnswer(null);
+                            setShowCorrectAnswer(false);
+                        } else {
+                            setShowResult(true);
+                        }
+                    }, 2000);
+                } else {
+                    // Неправильный ответ - сначала показываем красным (1.2 секунды)
+                    setTimeout(() => {
+                        setShowCorrectAnswer(true);
+                        // Потом показываем правильный ответ зеленым (1.8 секунды)
+                        setTimeout(() => {
+                            if (currentQuestion < quizTerms.length - 1) {
+                                setCurrentQuestion(currentQuestion + 1);
+                                setSelectedAnswer(null);
+                                setShowCorrectAnswer(false);
+                            } else {
+                                setShowResult(true);
+                            }
+                        }, 1800);
+                    }, 1200);
+                }
+            };
+
+            if (showResult) {
+                const percentage = (score / quizTerms.length) * 100;
+                return (
+                    <div className="max-w-2xl mx-auto text-center">
+                        <div className="bg-white rounded-3xl shadow-2xl p-12">
+                            <div className="text-6xl mb-6">
+                                {percentage >= 80 ? '🎉' : percentage >= 60 ? '👍' : '💪'}
+                            </div>
+                            <div className="text-4xl font-bold mb-4">
+                                Результат: {score} из {quizTerms.length}
+                            </div>
+                            <div className="text-2xl text-gray-600 mb-8">
+                                {percentage >= 80 ? 'Отлично!' : percentage >= 60 ? 'Хорошо!' : 'Нужно повторить'}
+                            </div>
+                            <button
+                                onClick={onComplete}
+                                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-xl shadow-lg hover:shadow-xl transition-all"
+                            >
+                                Вернуться в меню
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-2xl mx-auto">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="text-lg font-bold text-purple-600">
+                                Вопрос {currentQuestion + 1} из {quizTerms.length}
+                            </div>
+                            <div className="text-lg font-bold text-green-600">
+                                Правильных: {score}
+                            </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <div className="text-3xl font-bold text-center mb-4 text-purple-600">
+                                {currentTerm.ro}
+                            </div>
+                            <div className="text-xl text-center text-gray-600">
+                                [{currentTerm.transcription}]
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {options.map((option, index) => {
+                                let buttonStyle = 'bg-gray-100 hover:bg-purple-100 text-gray-800';
+                                let icon = '';
+                                
+                                if (selectedAnswer !== null) {
+                                    const isCorrectOption = option.id === currentTerm.id;
+                                    const isSelectedOption = selectedAnswer.id === option.id;
+                                    const isCorrectAnswer = selectedAnswer.id === currentTerm.id;
+                                    
+                                    if (isCorrectAnswer) {
+                                        // Правильный ответ выбран - показываем зеленым
+                                        if (isSelectedOption) {
+                                            buttonStyle = 'bg-green-500 text-white transform scale-105 shadow-lg';
+                                            icon = '✓ ';
+                                        } else {
+                                            buttonStyle = 'bg-gray-100 text-gray-400';
+                                        }
+                                    } else {
+                                        // Неправильный ответ выбран
+                                        if (isSelectedOption) {
+                                            // Выбранный неправильный - красный
+                                            buttonStyle = 'bg-red-500 text-white transform scale-105 shadow-lg';
+                                            icon = '✗ ';
+                                        } else if (isCorrectOption && showCorrectAnswer) {
+                                            // Правильный ответ - показываем зеленым на втором этапе
+                                            buttonStyle = 'bg-green-500 text-white transform scale-105 shadow-lg';
+                                            icon = '✓ ';
+                                        } else {
+                                            buttonStyle = 'bg-gray-100 text-gray-400';
+                                        }
+                                    }
+                                }
+                                
+                                return (
+                                    <button
+                                        key={option.id}
+                                        onClick={() => handleAnswer(option)}
+                                        disabled={selectedAnswer !== null}
+                                        className={`w-full p-4 rounded-xl font-bold text-lg transition-all duration-300 ${buttonStyle}`}
+                                    >
+                                        {icon}{option.ru}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {selectedAnswer !== null && (
+                            <div className="mt-6 text-center">
+                                {selectedAnswer.id === currentTerm.id ? (
+                                    <div className="text-2xl font-bold text-green-600 animate-pulse">
+                                        🎉 Правильно! Отлично!
+                                    </div>
+                                ) : !showCorrectAnswer ? (
+                                    <div className="text-2xl font-bold text-red-600 animate-pulse">
+                                        ❌ Неправильно... Смотри правильный ответ ↓
+                                    </div>
+                                ) : (
+                                    <div className="text-2xl font-bold text-green-600 animate-pulse">
+                                        👆 Запомни правильный ответ!
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // Компонент тренировки
+        const Practice = ({ terms }) => {
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [userInput, setUserInput] = useState('');
+            const [result, setResult] = useState(null);
+            const [score, setScore] = useState({ correct: 0, total: 0 });
+
+            const currentTerm = terms[currentIndex];
+
+            const checkAnswer = () => {
+                const isCorrect = userInput.toLowerCase().trim() === currentTerm.ru.toLowerCase();
+                setResult(isCorrect);
+                setScore({
+                    correct: score.correct + (isCorrect ? 1 : 0),
+                    total: score.total + 1
+                });
+
+                setTimeout(() => {
+                    setCurrentIndex((currentIndex + 1) % terms.length);
+                    setUserInput('');
+                    setResult(null);
+                }, 2000);
+            };
+
+            return (
+                <div className="max-w-2xl mx-auto">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8">
+                        <div className="text-center mb-6">
+                            <div className="text-sm text-gray-500 mb-2">
+                                Статистика: {score.correct} из {score.total} правильных
+                            </div>
+                            <div className="text-4xl font-bold text-purple-600 mb-2">
+                                {currentTerm.ro}
+                            </div>
+                            <div className="text-xl text-gray-600">
+                                [{currentTerm.transcription}]
+                            </div>
+                        </div>
+
+                        <div className="mb-6">
+                            <input
+                                type="text"
+                                value={userInput}
+                                onChange={(e) => setUserInput(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && checkAnswer()}
+                                placeholder="Введите перевод на русский..."
+                                className="w-full p-4 text-xl border-2 border-purple-300 rounded-xl focus:outline-none focus:border-purple-500"
+                                disabled={result !== null}
+                            />
+                        </div>
+
+                        {result !== null && (
+                            <div className={`text-center text-2xl font-bold mb-4 ${
+                                result ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                                {result ? '✅ Правильно!' : `❌ Правильный ответ: ${currentTerm.ru}`}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={checkAnswer}
+                            disabled={!userInput || result !== null}
+                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
+                        >
+                            Проверить
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // Компонент справочника
+        const Reference = ({ terms }) => {
+            const [selectedCategory, setSelectedCategory] = useState('all');
+            const [searchQuery, setSearchQuery] = useState('');
+
+            // Прокрутка к началу страницы при открытии справочника
+            useEffect(() => {
+                window.scrollTo(0, 0);
+            }, []);
+
+            const categories = {
+                all: '🌟 Все термины',
+                basic: '📐 Базовые понятия',
+                types: '📊 Типы углов',
+                relations: '🔗 Отношения между углами',
+                tools: '🛠️ Инструменты'
+            };
+
+            const filteredTerms = terms.filter(term => {
+                const matchesCategory = selectedCategory === 'all' || term.category === selectedCategory;
+                const matchesSearch = term.ro.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                     term.ru.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+
+            return (
+                <div className="max-w-4xl mx-auto">
+                    <div className="mb-6">
+                        <input
+                            type="text"
+                            placeholder="🔍 Поиск термина..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full p-4 text-lg border-2 border-purple-300 rounded-xl focus:outline-none focus:border-purple-500 mb-4"
+                        />
+                        
+                        <div className="flex flex-wrap gap-2">
+                            {Object.entries(categories).map(([key, label]) => (
+                                <button
+                                    key={key}
+                                    onClick={() => setSelectedCategory(key)}
+                                    className={`px-4 py-2 rounded-xl font-bold transition-all ${
+                                        selectedCategory === key
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    }`}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        {filteredTerms.map(term => (
+                            <div key={term.id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div className="text-2xl font-bold text-purple-600">{term.ro}</div>
+                                        <div className="text-sm text-gray-500">[{term.transcription}]</div>
+                                    </div>
+                                    <div className="text-2xl font-bold text-green-600">{term.ru}</div>
+                                </div>
+                                
+                                <div className="text-gray-700 mb-3">{term.definition}</div>
+                                
+                                {term.degrees !== undefined && (
+                                    <div className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-bold mb-2">
+                                        {term.degrees}°
+                                    </div>
+                                )}
+                                
+                                {term.sum && (
+                                    <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold mb-2 ml-2">
+                                        Сумма = {term.sum}°
+                                    </div>
+                                )}
+                                
+                                {term.important && (
+                                    <div className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-bold mb-2 ml-2">
+                                        ⭐ Важно!
+                                    </div>
+                                )}
+                                
+                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                    <div className="text-sm text-purple-600 font-bold mb-1">💬 {term.example}</div>
+                                    <div className="text-sm text-green-600">📖 {term.exampleRu}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Главный компонент приложения
+        const App = () => {
+            const [currentMode, setCurrentMode] = useState('menu');
+            const [currentTermIndex, setCurrentTermIndex] = useState(0);
+            const [selectedCategory, setSelectedCategory] = useState('all');
+            const [quizKey, setQuizKey] = useState(0); // Ключ для пересоздания квиза
+
+            // Прокрутка к началу страницы при смене режима
+            useEffect(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, [currentMode]);
+
+            const getTermsForMode = () => {
+                if (selectedCategory === 'all') return allTerms;
+                return allTerms.filter(t => t.category === selectedCategory);
+            };
+
+            const startQuiz = () => {
+                setQuizKey(quizKey + 1); // Увеличиваем ключ для создания нового экземпляра
+                setCurrentMode('quiz');
+            };
+
+            const renderMode = () => {
+                const terms = getTermsForMode();
+
+                switch (currentMode) {
+                    case 'flashcards':
+                        return (
+                            <Flashcard
+                                term={terms[currentTermIndex]}
+                                onNext={() => setCurrentTermIndex((currentTermIndex + 1) % terms.length)}
+                            />
+                        );
+                    case 'quiz':
+                        return <Quiz key={quizKey} terms={terms} onComplete={() => setCurrentMode('menu')} />;
+                    case 'practice':
+                        return <Practice terms={terms} />;
+                    case 'reference':
+                        return <Reference terms={allTerms} />;
+                    default:
+                        return (
+                            <div className="max-w-4xl mx-auto">
+                                <div className="text-center mb-12">
+                                    <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                        Изучаем углы
+                                    </h1>
+                                    <h2 className="text-4xl font-bold text-purple-600 mb-2">Unghiuri</h2>
+                                    <p className="text-xl text-gray-600">Интерактивное обучение для 6 класса</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                    <button
+                                        onClick={() => {
+                                            setCurrentMode('flashcards');
+                                            setCurrentTermIndex(0);
+                                        }}
+                                        className="bg-gradient-to-br from-blue-400 to-purple-500 text-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+                                    >
+                                        <div className="text-6xl mb-4">🎴</div>
+                                        <div className="text-2xl font-bold mb-2">Карточки</div>
+                                        <div className="text-sm opacity-90">Изучай термины с переворачивающимися карточками</div>
+                                    </button>
+
+                                    <button
+                                        onClick={startQuiz}
+                                        className="bg-gradient-to-br from-pink-400 to-red-500 text-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+                                    >
+                                        <div className="text-6xl mb-4">🎯</div>
+                                        <div className="text-2xl font-bold mb-2">Квиз</div>
+                                        <div className="text-sm opacity-90">Проверь свои знания в тесте</div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setCurrentMode('practice')}
+                                        className="bg-gradient-to-br from-green-400 to-teal-500 text-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+                                    >
+                                        <div className="text-6xl mb-4">✍️</div>
+                                        <div className="text-2xl font-bold mb-2">Тренировка</div>
+                                        <div className="text-sm opacity-90">Тренируйся писать переводы</div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setCurrentMode('reference')}
+                                        className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white p-8 rounded-3xl shadow-xl hover:shadow-2xl transition-all transform hover:scale-105"
+                                    >
+                                        <div className="text-6xl mb-4">📚</div>
+                                        <div className="text-2xl font-bold mb-2">Справочник</div>
+                                        <div className="text-sm opacity-90">Полный список всех терминов</div>
+                                    </button>
+                                </div>
+
+                                <div className="bg-white rounded-3xl shadow-xl p-8">
+                                    <h3 className="text-2xl font-bold mb-4 text-purple-600">📊 Статистика обучения</h3>
+                                    <div className="grid grid-cols-3 gap-4 text-center">
+                                        <div>
+                                            <div className="text-3xl font-bold text-blue-600">{allTerms.length}</div>
+                                            <div className="text-sm text-gray-600">Всего терминов</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-3xl font-bold text-green-600">{termsDatabase.types.length}</div>
+                                            <div className="text-sm text-gray-600">Типов углов</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-3xl font-bold text-purple-600">{termsDatabase.relations.length}</div>
+                                            <div className="text-sm text-gray-600">Отношений</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 text-center">
+                                    <div className="bg-purple-100 rounded-2xl p-6 inline-block">
+                                        <div className="text-lg font-bold text-purple-800 mb-2">💡 Совет дня</div>
+                                        <div className="text-purple-700">
+                                            Повторяй термины каждый день по 10 минут для лучшего запоминания!
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 text-center">
+                                    <a 
+                                        href="https://github.com/DemoSkillLab/" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all hover:shadow-xl"
+                                    >
+                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" clipRule="evenodd" />
+                                        </svg>
+                                        <span>DemoSkillLab на GitHub</span>
+                                    </a>
+                                </div>
+                            </div>
+                        );
+                }
+            };
+
+            return (
+                <div className="min-h-screen p-6">
+                    {currentMode !== 'menu' && (
+                        <div className="max-w-4xl mx-auto mb-6">
+                            <button
+                                onClick={() => setCurrentMode('menu')}
+                                className="bg-white text-purple-600 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+                            >
+                                ← Вернуться в меню
+                            </button>
+                        </div>
+                    )}
+                    {renderMode()}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
