@@ -235,8 +235,6 @@ Copyright (c) 2025 DemoSkillLab
 
 ---
 
-**⭐ Если проект вам помог - поставьте звезду на GitHub!**
-
 Made with ❤️ for multilingual education
 
 ---
