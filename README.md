@@ -179,7 +179,6 @@ const termsDatabase = {
 Этот проект распространяется под лицензией MIT. Подробности в файле [LICENSE](LICENSE).
 
 ```
-MIT License
 
 Copyright (c) 2025 DemoSkillLab
 
