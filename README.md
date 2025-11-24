@@ -2,7 +2,6 @@
 
 Интерактивное веб-приложение для изучения румынской геометрической терминологии русскоязычными учениками 6 класса.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC.svg)](https://tailwindcss.com/)
 
@@ -172,16 +171,6 @@ const termsDatabase = {
 <div className="bg-blue-500 text-white p-4 rounded-xl">
   Ваш контент
 </div>
-```
-
-## 📄 Лицензия
-
-Этот проект распространяется под лицензией MIT. Подробности в файле [LICENSE](LICENSE).
-
-```
-
-Copyright (c) 2025 DemoSkillLab
-
 ```
 
 ## 👥 Авторы
